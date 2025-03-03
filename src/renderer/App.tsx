@@ -1,40 +1,45 @@
 import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
-import icon from '../../assets/icon.svg';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 
 function Hello() {
+  const [timer, setTimer] = useState('00:00:00');
+  const [isRunning, setIsRunning] = useState(false);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+
+    if (isRunning) {
+      interval = setInterval(() => {
+        setTimer((prevTimer) => {
+          const [hours, minutes, seconds] = prevTimer.split(':').map(Number);
+          const totalSeconds = hours * 3600 + minutes * 60 + seconds + 1;
+          const newHours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+          const newMinutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+          const newSeconds = String(totalSeconds % 60).padStart(2, '0');
+          return `${newHours}:${newMinutes}:${newSeconds}`;
+        });
+      }, 1000);
+    } else if (!isRunning && interval) {
+      clearInterval(interval);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isRunning]);
+
+  function startTimer() {
+    console.log('Timer started');
+    setIsRunning(true);
+  }
+
   return (
     <div>
-      <div className="Hello">
-        <img width="200" alt="icon" src={icon} />
-      </div>
-      <h1>electron-react-boilerplate</h1>
-      <div className="Hello">
-        <a
-          href="https://electron-react-boilerplate.js.org/"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <button type="button">
-            <span role="img" aria-label="books">
-              📚
-            </span>
-            Read our docs
-          </button>
-        </a>
-        <a
-          href="https://github.com/sponsors/electron-react-boilerplate"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <button type="button">
-            <span role="img" aria-label="folded hands">
-              🙏
-            </span>
-            Donate
-          </button>
-        </a>
-      </div>
+      <h1>{timer}</h1>
+      <button type='button'>Resume</button>
+      <button type='button' onClick={startTimer}>Restart</button>
+      <button type='button'>Skip</button>
     </div>
   );
 }
