@@ -55,13 +55,14 @@ function Hello() {
       </div>
       <div id="session-b-timer">
         <p>Session B</p>
+        <h1>{sessionBTimer}</h1>
         <input type="number" name="" id="" />
         <input type="number" name="" id="" />
       </div>
       <button type='button' onClick={startTimer}>GO!</button>
       
       <button type='button'>Restart</button>
-      <button type='button' onClick={startTimer}>Resume</button>
+      <button type='button'>Resume</button>
       <button type='button'>Skip</button>
     </div>
   );
