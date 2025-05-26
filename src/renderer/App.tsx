@@ -13,12 +13,15 @@ function Hello() {
     if (isRunning) {
       interval = setInterval(() => {
         setSessionATimer((prevTimer) => {
-          const [hours, minutes, seconds] = prevTimer.split(':').map(Number);
-          const totalSeconds = hours * 3600 + minutes * 60 + seconds + 1;
-          const newHours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+          const [minutes, seconds] = prevTimer.split(':').map(Number);
+          if (minutes === 0 && seconds === 0) {
+            setIsRunning(false);
+            return '00:00'; // Reset timer when it reaches zero
+          }
+          const totalSeconds = minutes * 60 + seconds - 1;
           const newMinutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
           const newSeconds = String(totalSeconds % 60).padStart(2, '0');
-          return `${newHours}:${newMinutes}`;
+          return `${newMinutes}:${newSeconds}`;
         });
       }, 1000);
     } else if (!isRunning && interval) {
@@ -59,11 +62,13 @@ function Hello() {
         <input type="number" name="" id="" />
         <input type="number" name="" id="" />
       </div>
-      <button type='button' onClick={startTimer}>GO!</button>
-      
-      <button type='button'>Restart</button>
-      <button type='button'>Resume</button>
-      <button type='button'>Skip</button>
+      <button class="start-timer-btn" type='button' onClick={startTimer}>GO!</button>
+
+      <div className="timer-control-btns">
+        <button type='button'>Restart</button>
+        <button type='button'>Resume</button>
+        <button type='button'>Skip</button>
+      </div>
     </div>
   );
 }
