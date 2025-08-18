@@ -1,73 +1,132 @@
+/* eslint-disable no-alert */
 import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 
 function Hello() {
   const [sessionATimer, setSessionATimer] = useState('00:00');
+  const [sessionAElapsedTime, setSessionAElapsedTime] = useState('00:00');
   const [sessionBTimer, setSessionBTimer] = useState('00:00');
-  const [isRunning, setIsRunning] = useState(false);
+  const [sessionBElapsedTime, setSessionBElapsedTime] = useState('00:00');
+  const [isSessionARunning, setIsSessionARunning] = useState(false);
+  const [isSessionBRunning, setIsSessionBRunning] = useState(false);
+
+  interface Timer {
+    name: string;
+    currentTime: string;
+    setTime: string;
+    status: boolean; // true = active (could be playing or paused), false = inactive (not playing)
+  }
+
+  const [seshATimer, setSeshATimer] = useState<Timer>({
+    name: 'Timer A',
+    currentTime: '00:00',
+    setTime: '00:00',
+    status: false,
+  });
+
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Helper functions for Timer interface
+  function updateTimerName(timer: Timer, newName: string): Timer {
+    return { ...timer, name: newName };
+  }
+
+  const updateTimerCurrentTime = React.useCallback(
+    (timer: Timer, newCurrentTime: string): Timer => {
+      return { ...timer, currentTime: newCurrentTime };
+    },
+    [],
+  );
+
+  function updateTimerSetTime(timer: Timer, newSetTime: string): Timer {
+    return { ...timer, setTime: newSetTime };
+  }
+
+  function updateTimerStatus(timer: Timer, newStatus: boolean): Timer {
+    return { ...timer, status: newStatus };
+  }
 
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-
-    if (isRunning) {
-      interval = setInterval(() => {
-        setSessionATimer((prevTimer) => {
-          const [minutes, seconds] = prevTimer.split(':').map(Number);
-          if (minutes === 0 && seconds === 0) {
-            setIsRunning(false);
-            return '00:00'; // Reset timer when it reaches zero
-          }
-          const totalSeconds = minutes * 60 + seconds - 1;
-          const newMinutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
-          const newSeconds = String(totalSeconds % 60).padStart(2, '0');
-          return `${newMinutes}:${newSeconds}`;
-        });
-      }, 1000);
-    } else if (!isRunning && interval) {
-      clearInterval(interval);
+    if (seshATimer.currentTime === '00:00') {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      return;
     }
 
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isRunning]);
+    if (seshATimer.status && !intervalRef.current) {
+      intervalRef.current = setInterval(() => {
+        setSeshATimer((prev) => {
+          const [minutes, seconds] = prev.currentTime.split(':').map(Number);
+          const totalSeconds = minutes * 60 + seconds - 1;
+          const newMinutes = String(
+            Math.floor((totalSeconds % 3600) / 60),
+          ).padStart(2, '0');
+          const newSeconds = String(totalSeconds % 60).padStart(2, '0');
+          const newTime = `${newMinutes}:${newSeconds}`;
+          return updateTimerCurrentTime(prev, newTime);
+        });
+      }, 1000);
+    }
+  }, [seshATimer.status, seshATimer.currentTime, updateTimerCurrentTime]);
 
-  function startTimer() {
-    const minutesInput = document.getElementById('session-a-minutes') as HTMLInputElement;
-    const secondsInput = document.getElementById('session-a-seconds') as HTMLInputElement;
+  function startPomodoro() {
+    const sessionAMinutesInput = document.getElementById(
+      'session-a-minutes',
+    ) as HTMLInputElement;
+    const sessionASecondsInput = document.getElementById(
+      'session-a-seconds',
+    ) as HTMLInputElement;
+    const sessionBMinutesInput = document.getElementById(
+      'session-b-minutes',
+    ) as HTMLInputElement;
+    const sessionBSecondsInput = document.getElementById(
+      'session-b-seconds',
+    ) as HTMLInputElement;
 
-    const minutes = minutesInput?.value || '00';
-    const seconds = secondsInput?.value || '00';
+    const sessionAMinutes = sessionAMinutesInput?.value || '00';
+    const sessionASeconds = sessionASecondsInput?.value || '00';
+    const sessionBMinutes = sessionBMinutesInput?.value || '00';
+    const sessionBSeconds = sessionBSecondsInput?.value || '00';
 
-    const formattedMinutes = String(minutes).padStart(2, '0');
-    const formattedSeconds = String(seconds).padStart(2, '0');
+    if (sessionAMinutes === '00' && sessionASeconds === '00') {
+      alert('Please enter a valid time for Session A.');
+      return;
+    }
 
-    setSessionATimer(`${formattedMinutes}:${formattedSeconds}`);
-    console.log('Timer started');
-    setIsRunning(true);
+    const newTime = `${String(sessionAMinutes).padStart(2, '0')}:${String(sessionASeconds).padStart(2, '0')}`;
+    setSeshATimer((prev) => {
+      let updated = updateTimerCurrentTime(prev, newTime);
+      updated = updateTimerSetTime(updated, newTime);
+      updated = updateTimerStatus(updated, true);
+      return updated;
+    });
   }
 
   return (
     <div>
       <div id="session-a-timer">
         <p>Session A</p>
-        <h1>{sessionATimer}</h1>
+        <h1>{seshATimer.currentTime}</h1>
         <input type="number" name="" id="session-a-minutes" />
         <input type="number" name="" id="session-a-seconds" />
       </div>
       <div id="session-b-timer">
         <p>Session B</p>
-        <h1>{sessionBTimer}</h1>
-        <input type="number" name="" id="" />
-        <input type="number" name="" id="" />
+        <h1>{sessionBElapsedTime}</h1>
+        <input type="number" name="" id="session-b-minutes" />
+        <input type="number" name="" id="session-b-seconds" />
       </div>
-      <button class="start-timer-btn" type='button' onClick={startTimer}>GO!</button>
+      <button className="start-timer-btn" type="button" onClick={startPomodoro}>
+        GO!
+      </button>
 
       <div className="timer-control-btns">
-        <button type='button'>Restart</button>
-        <button type='button'>Resume</button>
-        <button type='button'>Skip</button>
+        <button type="button">Restart</button>
+        <button type="button">Resume</button>
+        <button type="button">Skip</button>
       </div>
     </div>
   );
