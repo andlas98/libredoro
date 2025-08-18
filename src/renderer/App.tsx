@@ -4,11 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 
 function Hello() {
-  const [sessionATimer, setSessionATimer] = useState('00:00');
-  const [sessionAElapsedTime, setSessionAElapsedTime] = useState('00:00');
   const [sessionBTimer, setSessionBTimer] = useState('00:00');
   const [sessionBElapsedTime, setSessionBElapsedTime] = useState('00:00');
-  const [isSessionARunning, setIsSessionARunning] = useState(false);
   const [isSessionBRunning, setIsSessionBRunning] = useState(false);
 
   interface Timer {
@@ -18,8 +15,17 @@ function Hello() {
     status: boolean; // true = active (could be playing or paused), false = inactive (not playing)
   }
 
+  // setTime = the time the user sets on the timer
+  // currentTime = the time currently displaying on its corresponding timer, regardless of whether a timer is paused, active, or in another state
   const [seshATimer, setSeshATimer] = useState<Timer>({
     name: 'Timer A',
+    currentTime: '00:00',
+    setTime: '00:00',
+    status: false,
+  });
+
+  const [seshBTimer, setSeshBTimer] = useState<Timer>({
+    name: 'Timer B',
     currentTime: '00:00',
     setTime: '00:00',
     status: false,
@@ -45,6 +51,20 @@ function Hello() {
 
   function updateTimerStatus(timer: Timer, newStatus: boolean): Timer {
     return { ...timer, status: newStatus };
+  }
+
+  function checkForInvalidSetTime(
+    seshAMinutes: String,
+    seshASeconds: String,
+    seshBMinutes: String,
+    seshBSeconds: String,
+  ) {
+    if (
+      (seshAMinutes === '00' && seshASeconds === '00') ||
+      (seshBMinutes === '00' && seshBSeconds === '00')
+    ) {
+      alert('Please enter a valid time for Session A.');
+    }
   }
 
   useEffect(() => {
@@ -91,15 +111,30 @@ function Hello() {
     const sessionBMinutes = sessionBMinutesInput?.value || '00';
     const sessionBSeconds = sessionBSecondsInput?.value || '00';
 
+    checkForInvalidSetTime(
+      sessionAMinutes,
+      sessionASeconds,
+      sessionBMinutes,
+      sessionBSeconds,
+    );
     if (sessionAMinutes === '00' && sessionASeconds === '00') {
       alert('Please enter a valid time for Session A.');
       return;
     }
 
-    const newTime = `${String(sessionAMinutes).padStart(2, '0')}:${String(sessionASeconds).padStart(2, '0')}`;
+    const setTimeA = `${String(sessionAMinutes).padStart(2, '0')}:${String(sessionASeconds).padStart(2, '0')}`;
+    const setTimeB = `${String(sessionBMinutes).padStart(2, '0')}:${String(sessionBSeconds).padStart(2, '0')}`;
+
     setSeshATimer((prev) => {
-      let updated = updateTimerCurrentTime(prev, newTime);
-      updated = updateTimerSetTime(updated, newTime);
+      let updated = updateTimerCurrentTime(prev, setTimeA);
+      updated = updateTimerSetTime(updated, setTimeA);
+      updated = updateTimerStatus(updated, true);
+      return updated;
+    });
+
+    setSeshBTimer((prev) => {
+      let updated = updateTimerCurrentTime(prev, setTimeB);
+      updated = updateTimerSetTime(updated, setTimeB);
       updated = updateTimerStatus(updated, true);
       return updated;
     });
