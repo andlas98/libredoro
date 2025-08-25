@@ -73,6 +73,16 @@ function Hello() {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
+      // Start Session B when Session A finishes
+      setSeshBTimer((prev) => updateTimerStatus(prev, true));
+      if (
+        seshBTimer.currentTime === '00:00' &&
+        seshBTimer.setTime !== '00:00'
+      ) {
+        setSeshBTimer((prev) =>
+          updateTimerCurrentTime(prev, seshBTimer.setTime),
+        );
+      }
       return;
     }
 
@@ -81,16 +91,62 @@ function Hello() {
         setSeshATimer((prev) => {
           const [minutes, seconds] = prev.currentTime.split(':').map(Number);
           const totalSeconds = minutes * 60 + seconds - 1;
-          const newMinutes = String(
-            Math.floor((totalSeconds % 3600) / 60),
-          ).padStart(2, '0');
+          const newMinutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
           const newSeconds = String(totalSeconds % 60).padStart(2, '0');
           const newTime = `${newMinutes}:${newSeconds}`;
           return updateTimerCurrentTime(prev, newTime);
         });
       }, 1000);
     }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
   }, [seshATimer.status, seshATimer.currentTime, updateTimerCurrentTime]);
+
+  // Handles Session B countdown and transition back to Session A
+  useEffect(() => {
+    if (seshBTimer.currentTime === '00:00' && seshBTimer.status) {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      // Optionally, restart Session A or stop both timers here
+      setSeshATimer((prev) => updateTimerStatus(prev, true));
+      if (
+        seshATimer.currentTime === '00:00' &&
+        seshATimer.setTime !== '00:00'
+      ) {
+        setSeshATimer((prev) =>
+          updateTimerCurrentTime(prev, seshATimer.setTime),
+        );
+      }
+      return;
+    }
+
+    if (seshBTimer.status && !intervalRef.current) {
+      intervalRef.current = setInterval(() => {
+        setSeshBTimer((prev) => {
+          const [minutes, seconds] = prev.currentTime.split(':').map(Number);
+          const totalSeconds = minutes * 60 + seconds - 1;
+          const newMinutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+          const newSeconds = String(totalSeconds % 60).padStart(2, '0');
+          const newTime = `${newMinutes}:${newSeconds}`;
+          return updateTimerCurrentTime(prev, newTime);
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [seshBTimer.status, seshBTimer.currentTime, updateTimerCurrentTime]);
 
   function startPomodoro() {
     const sessionAMinutesInput = document.getElementById(
@@ -117,10 +173,6 @@ function Hello() {
       sessionBMinutes,
       sessionBSeconds,
     );
-    if (sessionAMinutes === '00' && sessionASeconds === '00') {
-      alert('Please enter a valid time for Session A.');
-      return;
-    }
 
     const setTimeA = `${String(sessionAMinutes).padStart(2, '0')}:${String(sessionASeconds).padStart(2, '0')}`;
     const setTimeB = `${String(sessionBMinutes).padStart(2, '0')}:${String(sessionBSeconds).padStart(2, '0')}`;
@@ -128,14 +180,14 @@ function Hello() {
     setSeshATimer((prev) => {
       let updated = updateTimerCurrentTime(prev, setTimeA);
       updated = updateTimerSetTime(updated, setTimeA);
-      updated = updateTimerStatus(updated, true);
+      updated = updateTimerStatus(updated, true); // Start Session A
       return updated;
     });
 
     setSeshBTimer((prev) => {
       let updated = updateTimerCurrentTime(prev, setTimeB);
       updated = updateTimerSetTime(updated, setTimeB);
-      updated = updateTimerStatus(updated, true);
+      updated = updateTimerStatus(updated, false); // Do NOT start Session B yet
       return updated;
     });
   }
@@ -150,7 +202,7 @@ function Hello() {
       </div>
       <div id="session-b-timer">
         <p>Session B</p>
-        <h1>{sessionBElapsedTime}</h1>
+        <h1>{seshBTimer.currentTime}</h1>
         <input type="number" name="" id="session-b-minutes" />
         <input type="number" name="" id="session-b-seconds" />
       </div>
