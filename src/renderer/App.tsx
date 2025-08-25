@@ -4,10 +4,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 
 function Hello() {
-  const [sessionBTimer, setSessionBTimer] = useState('00:00');
-  const [sessionBElapsedTime, setSessionBElapsedTime] = useState('00:00');
-  const [isSessionBRunning, setIsSessionBRunning] = useState(false);
-
   interface Timer {
     name: string;
     currentTime: string;
@@ -91,7 +87,9 @@ function Hello() {
         setSeshATimer((prev) => {
           const [minutes, seconds] = prev.currentTime.split(':').map(Number);
           const totalSeconds = minutes * 60 + seconds - 1;
-          const newMinutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+          const newMinutes = String(
+            Math.floor((totalSeconds % 3600) / 60),
+          ).padStart(2, '0');
           const newSeconds = String(totalSeconds % 60).padStart(2, '0');
           const newTime = `${newMinutes}:${newSeconds}`;
           return updateTimerCurrentTime(prev, newTime);
@@ -132,7 +130,9 @@ function Hello() {
         setSeshBTimer((prev) => {
           const [minutes, seconds] = prev.currentTime.split(':').map(Number);
           const totalSeconds = minutes * 60 + seconds - 1;
-          const newMinutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+          const newMinutes = String(
+            Math.floor((totalSeconds % 3600) / 60),
+          ).padStart(2, '0');
           const newSeconds = String(totalSeconds % 60).padStart(2, '0');
           const newTime = `${newMinutes}:${newSeconds}`;
           return updateTimerCurrentTime(prev, newTime);
